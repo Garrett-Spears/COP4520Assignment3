@@ -10,6 +10,7 @@ import java.util.concurrent.locks.ReentrantLock;
 public class BirthdayPresents {
     public static final int NUM_PRESENTS = 500000;
     private static final int NUM_SERVANTS = 4;
+    public static boolean PRINT_STEPS = false;
 
     public static void main(String[] args) {
         long startTime, endTime;
@@ -116,21 +117,25 @@ class ServantThread extends Thread {
 
                 boolean addPresentSuccessful = this.presentsChain.insertPresent(presentTagNum);
 
-                if (addPresentSuccessful) {
-                    System.out.println("Servant " + this.servantId + " successfully added present #" + presentTagNum + " to the ordered chain of presents.");
-                }
-                else {
-                    System.out.println("Servant " + this.servantId + " failed to add present #" + presentTagNum + " to the ordered chain of presents.");
+                if (BirthdayPresents.PRINT_STEPS) {
+                    if (addPresentSuccessful) {
+                        System.out.println("Servant " + this.servantId + " successfully added present #" + presentTagNum + " to the ordered chain of presents.");
+                    }
+                    else {
+                        System.out.println("Servant " + this.servantId + " failed to add present #" + presentTagNum + " to the ordered chain of presents.");
+                    }
                 }
             }
             else if (currTask == ServantTask.WRITE_THANK_YOU_CARD) {
                 Integer removedPresent = this.presentsChain.removePresent();
 
-                if (removedPresent != null) {
-                    System.out.println("Servant " + this.servantId + " successfully wrote thank you card for present #" + removedPresent + ".");
-                }
-                else {
-                    System.out.println("Servant " + this.servantId + " could not find any presents in the chain to write thank you cards for at this time.");
+                if (BirthdayPresents.PRINT_STEPS) {
+                    if (removedPresent != null) {
+                        System.out.println("Servant " + this.servantId + " successfully wrote thank you card for present #" + removedPresent + ".");
+                    }
+                    else {
+                        System.out.println("Servant " + this.servantId + " could not find any presents in the chain to write thank you cards for at this time.");
+                    }
                 }
             }
             else {
@@ -138,11 +143,13 @@ class ServantThread extends Thread {
 
                 boolean presentFound = this.presentsChain.containsPresent(randPresentTagNum);
 
-                if (presentFound) {
-                    System.out.println("Servant " + this.servantId + " found present #" + randPresentTagNum + " in the ordered chain of presents.");
-                }
-                else {
-                    System.out.println("Servant " + this.servantId + " did not find present #" + randPresentTagNum + " in the ordered chain of presents at this time.");
+                if (BirthdayPresents.PRINT_STEPS) {
+                    if (presentFound) {
+                        System.out.println("Servant " + this.servantId + " found present #" + randPresentTagNum + " in the ordered chain of presents.");
+                    }
+                    else {
+                        System.out.println("Servant " + this.servantId + " did not find present #" + randPresentTagNum + " in the ordered chain of presents at this time.");
+                    }
                 }
             }
         }
