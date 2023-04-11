@@ -8,9 +8,9 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 public class BirthdayPresents {
-    public static final int NUM_PRESENTS = 500000;
+    public static final int NUM_PRESENTS = 10;
     private static final int NUM_SERVANTS = 4;
-    public static boolean PRINT_STEPS = false;
+    public static boolean PRINT_STEPS = true;
 
     public static void main(String[] args) {
         long startTime, endTime;
@@ -115,40 +115,21 @@ class ServantThread extends Thread {
                     continue;
                 }
 
-                boolean addPresentSuccessful = this.presentsChain.insertPresent(presentTagNum);
-
-                if (BirthdayPresents.PRINT_STEPS) {
-                    if (addPresentSuccessful) {
-                        System.out.println("Servant " + this.servantId + " successfully added present #" + presentTagNum + " to the ordered chain of presents.");
-                    }
-                    else {
-                        System.out.println("Servant " + this.servantId + " failed to add present #" + presentTagNum + " to the ordered chain of presents.");
-                    }
-                }
+                this.presentsChain.insertPresent(presentTagNum, this.servantId);
             }
             else if (currTask == ServantTask.WRITE_THANK_YOU_CARD) {
-                Integer removedPresent = this.presentsChain.removePresent();
-
-                if (BirthdayPresents.PRINT_STEPS) {
-                    if (removedPresent != null) {
-                        System.out.println("Servant " + this.servantId + " successfully wrote thank you card for present #" + removedPresent + ".");
-                    }
-                    else {
-                        System.out.println("Servant " + this.servantId + " could not find any presents in the chain to write thank you cards for at this time.");
-                    }
-                }
+                this.presentsChain.removePresent(this.servantId);
             }
             else {
                 int randPresentTagNum = this.rand.nextInt(BirthdayPresents.NUM_PRESENTS) + 1;
-
-                boolean presentFound = this.presentsChain.containsPresent(randPresentTagNum);
+                boolean foundPresent = this.presentsChain.containsPresent(randPresentTagNum);
 
                 if (BirthdayPresents.PRINT_STEPS) {
-                    if (presentFound) {
-                        System.out.println("Servant " + this.servantId + " found present #" + randPresentTagNum + " in the ordered chain of presents.");
+                    if (foundPresent) {
+                        System.out.println("Servant " + servantId + " found present #" + randPresentTagNum + " in the ordered chain of presents.");
                     }
                     else {
-                        System.out.println("Servant " + this.servantId + " did not find present #" + randPresentTagNum + " in the ordered chain of presents at this time.");
+                        System.out.println("Servant " + servantId + " did not find present #" + randPresentTagNum + " in the ordered chain of presents.");
                     }
                 }
             }
@@ -187,12 +168,12 @@ class LazyLinkedList {
         return this.head.nextPresentNode == null;
     }
 
-    public boolean insertPresent(final int presentTagNum) {
+    public boolean insertPresent(final int presentTagNum, final int servantId) {
         while (true) {
             PresentNode pred = this.head;
             PresentNode curr = this.head.nextPresentNode;
 
-            while (curr != null && curr.tagNumber < presentTagNum) {
+            while (curr != null && presentTagNum < curr.tagNumber) {
                 pred = curr;
                 curr = curr.nextPresentNode;
             }
@@ -202,6 +183,11 @@ class LazyLinkedList {
                 if (curr == null) {
                     if (!pred.removed && pred.nextPresentNode == null) {
                         PresentNode newPresentNode = new PresentNode(presentTagNum, null);
+
+                        if (BirthdayPresents.PRINT_STEPS) {
+                            System.out.println("Servant " + servantId + " successfully added present #" + presentTagNum + " to the ordered chain of presents.");
+                        }
+
                         pred.nextPresentNode = newPresentNode;
                         return true;
                     }
@@ -214,10 +200,18 @@ class LazyLinkedList {
                 try {
                     if (validate(pred, curr)) {
                         if (curr.tagNumber == presentTagNum) {
+                            if (BirthdayPresents.PRINT_STEPS) {
+                                System.out.println("Servant " + servantId + " failed to add present #" + presentTagNum + " to the ordered chain of presents.");
+                            }
                             return false;
                         } 
                         else {
                             PresentNode newPresentNode = new PresentNode(presentTagNum, curr);
+
+                            if (BirthdayPresents.PRINT_STEPS) {
+                                System.out.println("Servant " + servantId + " successfully added present #" + presentTagNum + " to the ordered chain of presents.");
+                            }
+
                             pred.nextPresentNode = newPresentNode;
                             return true;
                         }
@@ -233,12 +227,15 @@ class LazyLinkedList {
         }
     }
 
-    public Integer removePresent() {
+    public Integer removePresent(final int servantId) {
         while (true) {
             PresentNode pred = this.head;
             PresentNode first = this.head.nextPresentNode;
 
             if (first == null) {
+                if (BirthdayPresents.PRINT_STEPS) {
+                    System.out.println("Servant " + servantId + " could not find any presents in the chain to write thank you cards for at this time.");
+                }
                 return null;
             }
 
@@ -249,6 +246,11 @@ class LazyLinkedList {
                     if (validate(pred, first)) {
                         first.removed = true;
                         pred.nextPresentNode = first.nextPresentNode;
+                        
+                        if (BirthdayPresents.PRINT_STEPS) {
+                            System.out.println("Servant " + servantId + " successfully wrote thank you card for present #" + first.tagNumber + ".");
+                        }
+
                         return first.tagNumber;
                     }
                 } 
@@ -262,6 +264,7 @@ class LazyLinkedList {
         }
     }
 
+    // Delete Later
     // public boolean removePresent(final int presentTagNum) {
     //     while (true) {
     //         PresentNode pred = this.head;
@@ -302,12 +305,14 @@ class LazyLinkedList {
     // }
 
     public boolean containsPresent(final int presentTagNum) {
-        PresentNode curr = this.head;
+        PresentNode curr = this.head.nextPresentNode;
 
-        while (curr != null && curr.tagNumber < presentTagNum) {
+        while (curr != null && presentTagNum < curr.tagNumber) {
             curr = curr.nextPresentNode;
         }
         
-        return curr != null && curr.tagNumber == presentTagNum && !curr.removed;
+        boolean foundPresent = curr != null && curr.tagNumber == presentTagNum;
+
+        return foundPresent;
     }
 }
