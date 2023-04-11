@@ -1,16 +1,16 @@
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Random;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 public class BirthdayPresents {
-    public static final int NUM_PRESENTS = 10;
+    public static final int NUM_PRESENTS = 500000;
     private static final int NUM_SERVANTS = 4;
-    public static boolean PRINT_STEPS = true;
+    public static boolean PRINT_STEPS = false;
 
     public static void main(String[] args) {
         long startTime, endTime;
@@ -70,13 +70,13 @@ class ServantThread extends Thread {
     private int servantId;
     private BlockingQueue<Integer> presentsBag;
     private LazyLinkedList presentsChain;
-    private Random rand;
+    private ThreadLocalRandom rand;
 
     public ServantThread(final int servantId, final BlockingQueue<Integer> presentsBag, final LazyLinkedList presentsChain) {
         this.servantId = servantId;
         this.presentsBag = presentsBag;
         this.presentsChain = presentsChain;
-        this.rand = new Random();
+        this.rand = ThreadLocalRandom.current();
     }
 
     private ServantTask getRandomTask() {
@@ -305,13 +305,23 @@ class LazyLinkedList {
     // }
 
     public boolean containsPresent(final int presentTagNum) {
+        PresentNode pred = this.head;
         PresentNode curr = this.head.nextPresentNode;
 
         while (curr != null && presentTagNum < curr.tagNumber) {
+            pred = curr;
             curr = curr.nextPresentNode;
         }
+
+        if (((ReentrantLock) pred.lock).isLocked()) {
+            pred.lock.lock();
+            if (!pred.removed) {
+                curr = pred.nextPresentNode;
+            }
+            pred.lock.unlock();
+        }
         
-        boolean foundPresent = curr != null && curr.tagNumber == presentTagNum;
+        boolean foundPresent = curr != null && curr.tagNumber == presentTagNum && !curr.removed;
 
         return foundPresent;
     }
