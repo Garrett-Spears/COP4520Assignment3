@@ -87,13 +87,11 @@ class ServantThread extends Thread {
     private int servantId;
     private BlockingQueue<Integer> presentsBag;
     private LazyLinkedList presentsChain;
-    private ThreadLocalRandom rand;
 
     public ServantThread(final int servantId, final BlockingQueue<Integer> presentsBag, final LazyLinkedList presentsChain) {
         this.servantId = servantId;
         this.presentsBag = presentsBag;
         this.presentsChain = presentsChain;
-        this.rand = ThreadLocalRandom.current();
     }
 
     // Returns a random task that the servant can do next
@@ -101,7 +99,7 @@ class ServantThread extends Thread {
         // No presents are left in the bag, so the servant can randomly choose between writing a
         // thank you card or checking if a present is currently in the chain
         if (this.presentsBag.isEmpty()) {
-            return (this.rand.nextBoolean()) ? ServantTask.WRITE_THANK_YOU_CARD : ServantTask.SEARCH_PRESENT_IN_CHAIN;
+            return (ThreadLocalRandom.current().nextBoolean()) ? ServantTask.WRITE_THANK_YOU_CARD : ServantTask.SEARCH_PRESENT_IN_CHAIN;
         }
         // No presents are currently inserted in the chain, so the only thing that the servant can do
         // right now is add a present to the chain
@@ -110,7 +108,7 @@ class ServantThread extends Thread {
         }
 
         // Otherwise, the servant can randomly choose between doing any of the three tasks
-        int randNum = this.rand.nextInt(3);
+        int randNum = ThreadLocalRandom.current().nextInt(3);
         if (randNum == 0) {
             return ServantTask.ADD_PRESENT_TO_CHAIN;
         }
@@ -152,7 +150,7 @@ class ServantThread extends Thread {
             else {
                 // Pick any random present out of all the presents originally in the bag and check whether or not
                 // it is currently found in the chain
-                int randPresentTagNum = this.rand.nextInt(BirthdayPresents.NUM_PRESENTS) + 1;
+                int randPresentTagNum = ThreadLocalRandom.current().nextInt(BirthdayPresents.NUM_PRESENTS) + 1;
                 boolean foundPresent = this.presentsChain.containsPresent(randPresentTagNum);
 
                 // If print flag is turned on, print whether or not this present was found in the chain
