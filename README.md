@@ -38,3 +38,77 @@ This search algorithm does not require any locking. However, before returning, I
 These three core operations of the concurrent lazy linked list are used by all the servant threads to achieve their tasks designated by the minotaur. Each servant is represented by a thread in the program. As the problem specifies, four servant threads are created in total to work together towards writing thank you cards for all the presents. Each servant thread is assigned a unique id (1 - 4), the unordered bag of presents, and the ordered chain of presents (initially empty). Each servant thread runs until all presents have been removed from the unordered bag and there are no presents left in the ordered chain. This signifies that all thank you cards have been written for each present, so the servant thread can simply halt execution. However, during execution, each servant thread randomly alternated between three different tasks: removing present from unordered bag and adding it to the chain of presents in sorted order, removing first present from the ordered chain and writing thank you card for it, and searching if a random present is currently in the ordered chain of presents. Every time a servant thread is ready for a new task it is randomly assigned one of these three. However, if no presents are currently in the chain, then the servant is assigned the first task automatically since the only thing to do is to remove a present from the unordered bag and add it to the chain. Also, if the unordered bag of presents is empty, then the servant thread is radomly assigned either task one or two since there are no more presents to remove from the bag for task one.
 
 In the main thread, after all four servant threads are initialized and started, then the main thread joins all four of these servant threads, so that it can wait until the servants have finished writing thank you cards for all the presents. After the main thread resumes execution, it simply prints out that all presents have had thank you cards written for them and the exact time it took for the servant threads to do all this processing.
+
+## Generating Output:
+
+I calculate the execution time of the program by recording the time right before all the servant threads are joined together and right after all the servant threads finish execution. At the end of the main thread's execution, it is printed out that all presents have had a thank you card written for them with how long it took for this to occur. 
+
+At the top of the "BirthdayPresents" class, there is a print flag that enables the printing out each the individual events for each servant. If this is turned on (set to true), then after each completion of a task, a servant will print what they achieved for that task. For the first task, a servant prints out whether or not they succeed inserting a present with its associated tag number into the ordered chain of presents. For the second task, a servant prints out whether or not they were able to remove the first present from the ordered chain, and if successful the servant prints that they wrote a thank you card for this present with its associated tag number. For the third task, the servant just prints out whether or not they found a present with the randomly generated tag number currently in the chain. For each of these task prints, the servant's assigned thread id is also printed out to show which threads are doing what. All these print statements help to give a sequential history of what each servant does and what happens to each present throughout the program's execution. However, this print flag can be set to false if only the final print that all presents have had a thank you card written for them is desired to be printed out.
+
+## Design Correctness/Efficiency: 
+
+To ensure that my program is working correctly, I simply lowered the number of presents to small constants such as 1, 2, 3, 5, and 10. I then ran my program repeatedly on these small tests with the print steps flag turned on. For each one of these trials, I would verify that the sequential order of output printed out by all servants was logically correct and that the program never finished execution before all presents have had a thank you card written for them. I also ensured that no presents had repeated operations, besides searching, performed on them. After repeating this process many times, I feel confident in my program's design correctness. I also followed a concurrent linked list implementation straight from the textbook, so that I can confident in its validity.
+
+Overall, I feel that my program is very efficient. I think that I was able to achieve this due to my use of a lazy linked list implementation in my program. With a coars-grained or fine-grained implementation, I feel that my program's efficiency would be much worse. On the reccomended test of 500,000 presents and no printing individual steps, my program is able to consistently run in under 500ms on my system. The numbers do vary a decent bit, but this is unavoidable since the order of tasks that servants do are randomly assigned. However, with the print flag turned on, my program takes about 4000ms on average to run for the same test of 500,000 presents. This increase in runtime with printing is unavoidable though since printing many things will always just add extra runtime to a program.
+
+
+## Experimental Evaluation
+
+For my experimental evaluation, I decided to run my program on varying numbers of input with and without the printing of individual steps enabled. I decided to test three input sizes for number of presents and ran five trials for each. The results of these trials are listed below.
+
+    NUM_PRESENTS = 5000
+        With Print Steps:
+            Trial 1: 0.69ms
+            Trial 2: 0.70ms
+            Trial 3: 0.70ms
+            Trial 4: 0.69ms
+            Trial 5: 0.68ms
+            Average: 0.692ms
+        Without Print Steps:
+            Trial 1: 12ms
+            Trial 2: 10ms
+            Trial 3: 9ms
+            Trial 4: 11ms
+            Trial 5: 10ms
+            Average: 10.4ms
+    
+    NUM_PRESENTS = 50,000
+        With Print Steps:
+            Trial 1: 439ms
+            Trial 2: 452ms
+            Trial 3: 449ms
+            Trial 4: 443ms
+            Trial 5: 458ms
+            Average: 448.2ms
+        Without Print Steps:
+            Trial 1: 87ms
+            Trial 2: 112ms
+            Trial 3: 110ms
+            Trial 4: 95ms
+            Trial 5: 109ms
+            Average: 102.6ms
+
+    NUM_PRESENTS = 500,000
+        With Print Steps:
+            Trial 1: 3885ms
+            Trial 2: 3847ms
+            Trial 3: 3902ms
+            Trial 4: 3912ms
+            Trial 5: 3903ms
+            Average: 3889.8ms
+        Without Print Steps:
+            Trial 1: 218ms
+            Trial 2: 206ms
+            Trial 3: 220ms
+            Trial 4: 232ms
+            Trial 5: 226ms
+            Average: 220.4ms
+
+## To Run Problem 1:
+
+Before running, you can modify the number of presents or servants for the problem by changing the value of the NUM_PRESENTS or NUM_SERVANTS field at the top of the "BirthdayPresents" class. You can also enable/disable printing of each servant's task in the program by changing the value of the PRINT_STEPS boolean
+flag, which is also found at the top of the "BirthdayPresents" class. To run the program:
+    1. Use the command prompt to navigate to the directory where the BirthdayPresents.java file is located.
+    2. Enter the command "javac BirthdayPresents.java" on the command line to compile the java source code.
+    3. Enter the command "java BirthdayPresents" on the command line to execute the code.
+    4. Output for the program is printed to the command line.
