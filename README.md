@@ -45,7 +45,7 @@ I calculate the execution time of the program by recording the time right before
 
 At the top of the "BirthdayPresents" class, there is a print flag that enables the printing out each the individual events for each servant. If this is turned on (set to true), then after each completion of a task, a servant will print what they achieved for that task. For the first task, a servant prints out whether or not they succeed inserting a present with its associated tag number into the ordered chain of presents. For the second task, a servant prints out whether or not they were able to remove the first present from the ordered chain, and if successful the servant prints that they wrote a thank you card for this present with its associated tag number. For the third task, the servant just prints out whether or not they found a present with the randomly generated tag number currently in the chain. For each of these task prints, the servant's assigned thread id is also printed out to show which threads are doing what. All these print statements help to give a sequential history of what each servant does and what happens to each present throughout the program's execution. However, this print flag can be set to false if only the final print that all presents have had a thank you card written for them is desired to be printed out.
 
-## Design Correctness/Efficiency: 
+## Design Correctness/Efficiency
 
 To ensure that my program is working correctly, I simply lowered the number of presents to small constants such as 1, 2, 3, 5, and 10. I then ran my program repeatedly on these small tests with the print steps flag turned on. For each one of these trials, I would verify that the sequential order of output printed out by all servants was logically correct and that the program never finished execution before all presents have had a thank you card written for them. I also ensured that no presents had repeated operations, besides searching, performed on them. After repeating this process many times, I feel confident in my program's design correctness. I also followed a concurrent linked list implementation straight from the textbook, so that I can confident in its validity.
 
@@ -112,3 +112,77 @@ flag, which is also found at the top of the "BirthdayPresents" class. To run the
     2. Enter the command "javac BirthdayPresents.java" on the command line to compile the java source code.
     3. Enter the command "java BirthdayPresents" on the command line to execute the code.
     4. Output for the program is printed to the command line.
+
+
+# Problem 2: Atmospheric Temperature Reading Module
+
+## Approach
+
+For this problem, each sensor is represented by a thread. As the problem specifies there are 8 total sensor threads that run simultaneously during the program's execution. Each sensor thread is responsible for recording 60 random temperatures in the range of -100F to 70F over the span of an hour. Since testing for an hour each time would be very time consuming, I also created a boolean flag at the top of the program that lets you run this same simulation over the span of a minute instead.
+
+Since the problem states that temperature readings from all sensors must be stored in shared memory space, I thought about many different ways I could store all of these temperature readings across different threads in one object. After further analyzing the problem, I discovered that the order of the temperature readings is in fact significant since it asks to keep track of the largest 10 minute interval temperature difference. This led me to finally settle on using a list of concurrent deques to store the temperature readings for each sensor.
+
+Essentially, there are 60 total concurrent deques, one for each minute or second. The idea is that each sensor thread keeps track of the current minute/second that it is recording a temperature for, and this temperature is added to the deque at the current minute/second position.
+
+At the beginning of the program, this list of concurrent deques is constructed. Then, all 8 sensor threads are initialized with each having a reference to this shared memory object. Immediately after, all the 8 sensor threads are started then joined together to pause the main thread's execution until all the sensor threads finish executing.
+
+Each sensor thread takes an hour or minute to run. In a sensor thread's run method, an integer keeps track of the current minute/second from 0-59 during the thread's execution. Every minute/second in this run method, a random temperature in the inclusive range of -100F to 70F is generated. This temperature is then added to the concurrent deque located at the index of the current minute/second in the shared list. The sensor thread is then put to sleep for a minute or second before it repeats this recording process again. Once the sensor thread records all 60 temperatures, the thread can finish execution and return.
+
+Once all sensor threads finish recording their temperatures, the main thread resumes execution and it now has access to all the temperature readings from all sensors. First, a minHeap and maxHeap are created to figure the highest and lowest temperatures recorded. The main thread then iterates through all temperatures record and stores each temperature in both the minHeap and maxHeap. After this, the main thread simply does through all possible intervals in the 60 time readings recorded and keeps track of the interval with the largest temperature difference that was found. Using this data, the program simply prints the top 5 highest and lowest temperatures that were recorded and the largest temperature difference interval that was found.
+
+## Generating Output
+
+As previously mentioned, at the end of the program's execution three things are printed out. First, the top 5 highest temperatures recorded are printed out in order. Second, the top 5 lowest temperatures recorded are printed out in order. Lastly, the largest temperature difference beween any 10 minute interval is printed out. The details of what the temperature started as and went to for this interval are also printed out. No runtime is printed out for this program, since this is simulated to either be right around a minute or hour.
+
+## Design Correctness/Efficiency
+
+To ensure that my program is working correctly, I first ran the program multiple times and printed out all the temperature values recorded by each sensor thread. I verified that these values followed a random pattern and that all (60 * 8) temperatures were recorded (60 for each sensor thread). I also ran my program multiple times and verfied that it always took right around a minute to run. Other than that, the top 5 highest and lowest values seem to be pretty accurate, and the largest temperature interval difference seems to be normal too. It's hard to valid
+
+My program is as efficient as can be since it has to wait for a whole minute or hour to record all the temperatures. The use of efficient concurrent data structures provided by Java makes it so that each sensor thread can quicly store each temperature reading in the shared memory space. The top 5 highest and lowest temperatures are calculated efficiently through the use of a minHeap and maxHeap. The calculation of the largest 10-min temperature difference is calculated efficiently by just parsing through the data and finding the max.
+
+## Experimental Evaluation
+
+For my experimental evaluation, I decided to run my program 5 times and record what output I get for each trial. The results of these trials are listed below:
+
+    Trial 1:
+        Top 5 Highest Temperatures: 70, 69, 69, 69, 69
+        Top 5 Lowest Temperatures: -100, -99, -99, -99, -99
+        Largest 10-minute Interval Temperature Difference: 167
+            Beginning Temperature: -99
+            End Temperature: 68
+    
+    Trial 2:
+        Top 5 Highest Temperatures: 70, 70, 69, 69, 69
+        Top 5 Lowest Temperatures: -100, -100, -100, -99, -98
+        Largest 10-minute Interval Temperature Difference: -168
+            Beginning Temperature: 69
+            End Temperature: -99
+    
+    Trial 3:
+        Top 5 Highest Temperatures: 70, 70, 70, 70, 69
+        Top 5 Lowest Temperatures: -100, -100, -99, -99, -97
+        Largest 10-minute Interval Temperature Difference: -169
+            Beginning Temperature: 70
+            End Temperature: -99
+
+    Trial 4:
+        Top 5 Highest Temperatures: 70, 70, 69, 69, 69
+        Top 5 Lowest Temperatures: -100, -100, -100, -99, -99
+        Largest 10-minute Interval Temperature Difference: -168
+            Beginning Temperature: 69
+            End Temperature: -99
+
+    Trial 5:
+        Top 5 Highest Temperatures: 70, 70, 70, 70, 69
+        Top 5 Lowest Temperatures: -100, -99, -99, -99, -99
+        Largest 10-minute Interval Temperature Difference: -170
+            Beginning Temperature: 70
+            End Temperature: -100
+
+## To Run Problem 2:
+
+Before running, you can modify whether the program's sensors should recrod 60 times over the span of an hour or a minute. This can be specified by changing the RECORD_HOUR field at the top of the "TemperatureReadings" class. To run the program:
+    1. Use the command prompt to navigate to the directory where the TemperatureReadings.java file is located.
+    2. Enter the command "javac TemperatureReadings.java" on the command line to compile the java source code.
+    3. Enter the command "java TemperatureReadings" on the command line to execute the code.
+    4. Wait an hour or minute until results are printed out
